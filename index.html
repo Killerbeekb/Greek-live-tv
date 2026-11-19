@@ -2,225 +2,91 @@
 <html lang="el">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>OmeChat Live</title>
 <link rel="manifest" href="manifest.json">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-body { background: #111; color: #fff; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
-.header { background: #1e1e1e; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
-.header h1 { font-size: 18px; color: #00e676; }
-.status { font-size: 13px; color: #00e676; font-weight: bold; }
-.videos { flex: 1; display: flex; flex-direction: column; position: relative; background: #000; }
-.video-box { flex: 1; position: relative; width: 100%; height: 50%; border-bottom: 1px solid #222; overflow: hidden; }
-video { width: 100%; height: 100%; object-fit: cover; }
-#localVideo { transform: scaleX(-1); }
-.label { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 12px; font-size: 12px; }
-.chat-overlay { position: absolute; bottom: 75px; left: 10px; right: 10px; max-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
-.msg { background: rgba(0,0,0,0.65); padding: 5px 10px; border-radius: 10px; font-size: 13px; width: fit-content; max-width: 85%; }
-.msg.me { background: rgba(0, 230, 118, 0.25); align-self: flex-end; }
-.controls { background: #1e1e1e; padding: 10px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #333; }
-.chat-input-row { display: flex; gap: 8px; }
-input { flex: 1; background: #2c2c2c; border: none; color: #fff; padding: 10px 14px; border-radius: 20px; outline: none; font-size: 14px; }
-button { border: none; border-radius: 20px; padding: 10px 16px; font-weight: bold; font-size: 14px; cursor: pointer; }
-.btn-send { background: #2979ff; color: #fff; }
-.action-row { display: flex; gap: 8px; justify-content: space-between; }
-.btn-next { flex: 2; background: #00e676; color: #000; font-size: 16px; }
-.btn-stop { flex: 1; background: #ff1744; color: #fff; }
-.btn-report { background: #424242; color: #ffab40; font-size: 12px; padding: 6px 12px; }
-button:disabled { opacity: 0.5; }
+*{box-sizing:border-box;margin:0;padding:0;font-family:sans-serif}
+body{background:#111;color:#fff;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+.h{background:#1e1e1e;padding:10px 15px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #333}
+.h h1{font-size:18px;color:#00e676}
+#st{font-size:13px;color:#00e676;font-weight:bold}
+.v{flex:1;display:flex;flex-direction:column;position:relative;background:#000}
+.b{flex:1;position:relative;width:100%;height:50%;border-bottom:1px solid #222;overflow:hidden}
+video{width:100%;height:100%;object-fit:cover}
+#lv{transform:scaleX(-1)}
+.l{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.6);padding:4px 10px;border-radius:12px;font-size:12px}
+#cb{position:absolute;bottom:75px;left:10px;right:10px;max-height:120px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;pointer-events:none}
+.m{background:rgba(0,0,0,.65);padding:5px 10px;border-radius:10px;font-size:13px;width:fit-content;max-width:85%}
+.me{background:rgba(0,230,118,.25);align-self:flex-end}
+.c{background:#1e1e1e;padding:10px;display:flex;flex-direction:column;gap:8px;border-top:1px solid #333}
+.r{display:flex;gap:8px}
+input{flex:1;background:#2c2c2c;border:none;color:#fff;padding:10px 14px;border-radius:20px;outline:none;font-size:14px}
+button{border:none;border-radius:20px;padding:10px 16px;font-weight:bold;font-size:14px;cursor:pointer}
+.bs{background:#2979ff;color:#fff}
+.bn{flex:2;background:#00e676;color:#000;font-size:16px}
+.bx{flex:1;background:#ff1744;color:#fff}
+.br{background:#424242;color:#ffab40;font-size:12px;padding:6px 12px}
+button:disabled{opacity:.5}
 </style>
-<script src="https://gstatic.com"></script>
-<script src="https://gstatic.com"></script>
 </head>
 <body>
-
-<div class="header">
-<h1>OmeChat Live</h1>
-<span class="status" id="statusText">Έτοιμο</span>
-<button class="btn-report" onclick="doReport()">⚠️ Report</button>
+<div class="h"><h1>OmeChat Live</h1><span id="st">Έτοιμο V4</span><button class="br" onclick="rep()">⚠️ Report</button></div>
+<div class="v">
+<div class="b"><video id="rv" autoplay playsinline></video><div class="l">Ξένος</div></div>
+<div class="b"><video id="lv" autoplay playsinline muted></video><div class="l" id="ml">Εσύ 🎤</div></div>
+<div id="cb"></div>
 </div>
-
-<div class="videos">
-<div class="video-box">
-<video id="remoteVideo" autoplay playsinline></video>
-<div class="label">Ξένος (Stranger)</div>
+<div class="c">
+<div class="r"><input id="mi" placeholder="Γράψε μήνυμα..."><button class="bs" onclick="snd()">Αποστολή</button></div>
+<div class="r"><button class="bn" onclick="go()">▶ Start / Next</button><button class="bx" id="xb" onclick="stp()" disabled>⏹ Stop</button></div>
 </div>
-<div class="video-box">
-<video id="localVideo" autoplay playsinline muted></video>
-<div class="label" id="myLabel">Εσύ (You) 🎤</div>
-</div>
-<div class="chat-overlay" id="chatBox"></div>
-</div>
-
-<div class="controls">
-<div class="chat-input-row">
-<input type="text" id="msgInput" placeholder="Γράψε ένα μήνυμα...">
-<button class="btn-send" onclick="doSend()">Αποστολή</button>
-</div>
-<div class="action-row">
-<button class="btn-next" id="nextBtn" onclick="doStart()">▶ Start / Next</button>
-<button class="btn-stop" id="stopBtn" onclick="doStop()" disabled>⏹ Stop</button>
-</div>
-</div>
-
+<script src="https://gstatic.com"></script>
+<script src="https://gstatic.com"></script>
 <script>
-const firebaseConfig = {
-apiKey: "AIzaSyCC1PFUW9uLh-E1mc9Byk3GxlJqQYrbh_A",
-authDomain: "://firebaseapp.com",
-projectId: "greektv-4402e",
-storageBucket: "greektv-4402e.firebasestorage.app",
-messagingSenderId: "778988572064",
-appId: "1:778988572064:web:2fdf78082d7123eee0e8c5"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const servers = { iceServers: Array.of({ urls: 'stun:://google.com' }) };
-
-let localStream = null;
-let pc = null;
-let currentRoomId = null;
-let unsubRoom = null;
-let unsubChat = null;
-
-const statusText = document.getElementById('statusText');
-const localVideo = document.getElementById('localVideo');
-const remoteVideo = document.getElementById('remoteVideo');
-const chatBox = document.getElementById('chatBox');
-const myLabel = document.getElementById('myLabel');
-const myId = Math.random().toString(36).substring(2, 9);
-
-async function doStart() {
-try {
-if (!localStream) {
-statusText.innerText = "Άδεια μικροφώνου...";
-const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-statusText.innerText = "Άδεια κάμερας...";
-const videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-
-localStream = new MediaStream();
-audioStream.getAudioTracks().forEach(t => localStream.addTrack(t));
-videoStream.getVideoTracks().forEach(t => localStream.addTrack(t));
-localVideo.srcObject = localStream;
-myLabel.innerText = "Εσύ (You) 🎤 OK";
+const cfg={apiKey:"AIzaSyCC1PFUW9uLh-E1mc9Byk3GxlJqQYrbh_A",authDomain:"://firebaseapp.com",projectId:"greektv-4402e",storageBucket:"greektv-4402e.firebasestorage.app",messagingSenderId:"778988572064",appId:"1:778988572064:web:2fdf78082d7123eee0e8c5"};
+let db=null,ls=null,pc=null,rid=null,ur=null,uc=null;
+const st=document.getElementById('st'),lv=document.getElementById('lv'),rv=document.getElementById('rv'),cb=document.getElementById('cb'),ml=document.getElementById('ml'),id=Math.random().toString(36).substring(2,9);
+const sv={iceServers:Array.of({urls:'stun:://google.com'})};
+function gdb(){if(!db&&window.firebase){if(!firebase.apps.length)firebase.initializeApp(cfg);db=firebase.firestore();}return db;}
+async function go(){
+try{
+if(!ls){
+st.innerText="Άδεια μικροφώνου...";const as=await navigator.mediaDevices.getUserMedia({audio:true});
+st.innerText="Άδεια κάμερας...";const vs=await navigator.mediaDevices.getUserMedia({video:true});
+ls=new MediaStream();as.getAudioTracks().forEach(t=>ls.addTrack(t));vs.getVideoTracks().forEach(t=>ls.addTrack(t));
+lv.srcObject=ls;ml.innerText="Εσύ 🎤 OK";
 }
-await doCleanup();
-document.getElementById('stopBtn').disabled = false;
-statusText.innerText = "Αναζήτηση χρήστη...";
-chatBox.innerHTML = "";
-
-pc = new RTCPeerConnection(servers);
-localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-
-pc.ontrack = (event) => {
-const s = event.streams.at(0);
-if (s) {
-remoteVideo.srcObject = s;
-statusText.innerText = "Συνδέθηκες!";
+document.getElementById('xb').disabled=false;
+if(!gdb()){st.innerText="Κάμερα/Μικρόφωνο ΟΚ";return;}
+await cln();st.innerText="Αναζήτηση χρήστη...";cb.innerHTML="";
+pc=new RTCPeerConnection(sv);ls.getTracks().forEach(t=>pc.addTrack(t,ls));
+pc.ontrack=e=>{const s=e.streams.at(0);if(s){rv.srcObject=s;st.innerText="Συνδέθηκες!";}};
+const sn=await db.collection('rooms').where('status','==','waiting').limit(1).get();
+if(!sn.empty){
+const d=sn.docs.at(0);rid=d.id;const rf=db.collection('rooms').doc(rid);
+pc.onicecandidate=e=>{if(e.candidate)rf.collection('calleeCandidates').add(e.candidate.toJSON());};
+await pc.setRemoteDescription(new RTCSessionDescription(d.data().offer));
+const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
+await rf.update({answer:{type:ans.type,sdp:ans.sdp},status:'connected'});
+rf.collection('callerCandidates').onSnapshot(s=>s.docChanges().forEach(c=>{if(c.type==='added')pc.addIceCandidate(new RTCIceCandidate(c.doc.data()));}));
+ur=rf.onSnapshot(s=>{if(!s.exists)go();});lch(rf);
+}else{
+const rf=db.collection('rooms').doc();rid=rf.id;
+pc.onicecandidate=e=>{if(e.candidate)rf.collection('callerCandidates').add(e.candidate.toJSON());};
+const off=await pc.createOffer();await pc.setLocalDescription(off);
+await rf.set({offer:{type:off.type,sdp:off.sdp},status:'waiting'});
+ur=rf.onSnapshot(async s=>{const dt=s.data();if(!dt){go();return;}if(!pc.currentRemoteDescription&&dt.answer){await pc.setRemoteDescription(new RTCSessionDescription(dt.answer));st.innerText="Συνδέθηκες!";}});
+rf.collection('calleeCandidates').onSnapshot(s=>s.docChanges().forEach(c=>{if(c.type==='added')pc.addIceCandidate(new RTCIceCandidate(c.doc.data()));}));
+lch(rf);
 }
-};
-
-const snapshot = await db.collection('rooms').where('status', '==', 'waiting').limit(1).get();
-
-if (!snapshot.empty) {
-const roomDoc = snapshot.docs.at(0);
-currentRoomId = roomDoc.id;
-const roomRef = db.collection('rooms').doc(currentRoomId);
-
-pc.onicecandidate = e => { if (e.candidate) roomRef.collection('calleeCandidates').add(e.candidate.toJSON()); };
-
-const offer = roomDoc.data().offer;
-await pc.setRemoteDescription(new RTCSessionDescription(offer));
-const answer = await pc.createAnswer();
-await pc.setLocalDescription(answer);
-
-await roomRef.update({ answer: { type: answer.type, sdp: answer.sdp }, status: 'connected' });
-
-roomRef.collection('callerCandidates').onSnapshot(snap => {
-snap.docChanges().forEach(change => {
-if (change.type === 'added') pc.addIceCandidate(new RTCIceCandidate(change.doc.data()));
-});
-});
-unsubRoom = roomRef.onSnapshot(snap => { if (!snap.exists) doStart(); });
-listenChat(roomRef);
-} else {
-const roomRef = db.collection('rooms').doc();
-currentRoomId = roomRef.id;
-
-pc.onicecandidate = e => { if (e.candidate) roomRef.collection('callerCandidates').add(e.candidate.toJSON()); };
-
-const offer = await pc.createOffer();
-await pc.setLocalDescription(offer);
-
-await roomRef.set({ offer: { type: offer.type, sdp: offer.sdp }, status: 'waiting' });
-
-unsubRoom = roomRef.onSnapshot(async snap => {
-const data = snap.data();
-if (!data) { doStart(); return; }
-if (!pc.currentRemoteDescription && data.answer) {
-await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-statusText.innerText = "Συνδέθηκες!";
+}catch(e){st.innerText="Σφάλμα: "+e.message;alert(e.message);}
 }
-});
-
-roomRef.collection('calleeCandidates').onSnapshot(snap => {
-snap.docChanges().forEach(change => {
-if (change.type === 'added') pc.addIceCandidate(new RTCIceCandidate(change.doc.data()));
-});
-});
-listenChat(roomRef);
-}
-} catch (err) {
-statusText.innerText = "Σφάλμα: " + err.message;
-alert("Πρόβλημα: " + err.message);
-}
-}
-
-function listenChat(roomRef) {
-unsubChat = roomRef.collection('messages').orderBy('time').onSnapshot(snap => {
-snap.docChanges().forEach(change => {
-if (change.type === 'added') {
-const d = change.doc.data();
-const div = document.createElement('div');
-div.className = 'msg' + (d.sender === myId ? ' me' : '');
-div.innerText = d.text;
-chatBox.appendChild(div);
-chatBox.scrollTop = chatBox.scrollHeight;
-}
-});
-});
-}
-
-async function doSend() {
-const input = document.getElementById('msgInput');
-const text = input.value.trim();
-if (!text || !currentRoomId) return;
-input.value = '';
-await db.collection('rooms').doc(currentRoomId).collection('messages').add({ text: text, sender: myId, time: Date.now() });
-}
-
-async function doCleanup() {
-if (unsubRoom) { unsubRoom(); unsubRoom = null; }
-if (unsubChat) { unsubChat(); unsubChat = null; }
-if (pc) { pc.close(); pc = null; }
-remoteVideo.srcObject = null;
-if (currentRoomId) {
-try { await db.collection('rooms').doc(currentRoomId).delete(); } catch(e) {}
-currentRoomId = null;
-}
-}
-
-async function doStop() {
-await doCleanup();
-statusText.innerText = "Σταμάτησε";
-document.getElementById('stopBtn').disabled = true;
-}
-
-function doReport() {
-alert("Η αναφορά καταχωρήθηκε.");
-doStart();
-}
+function lch(rf){uc=rf.collection('messages').orderBy('time').onSnapshot(s=>s.docChanges().forEach(c=>{if(c.type==='added'){const d=c.doc.data(),v=document.createElement('div');v.className='m'+(d.sender===id?' me':'');v.innerText=d.text;cb.appendChild(v);cb.scrollTop=cb.scrollHeight;}}));}
+async function snd(){const i=document.getElementById('mi'),t=i.value.trim();if(!t||!rid||!db)return;i.value='';await db.collection('rooms').doc(rid).collection('messages').add({text:t,sender:id,time:Date.now()});}
+async function cln(){if(ur){ur();ur=null;}if(uc){uc();uc=null;}if(pc){pc.close();pc=null;}rv.srcObject=null;if(rid&&db){try{await db.collection('rooms').doc(rid).delete();}catch(e){}rid=null;}}
+async function stp(){await cln();st.innerText="Σταμάτησε";document.getElementById('xb').disabled=true;}
+function rep(){alert("Η αναφορά καταχωρήθηκε.");go();}
 </script>
 </body>
 </html>
