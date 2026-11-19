@@ -1,6 +1,8 @@
 {
+  "id": "/Greek-live-tv/",
   "name": "OmeChat Live",
   "short_name": "OmeChat",
+  "description": "Live random video chat application",
   "start_url": "/Greek-live-tv/",
   "display": "standalone",
   "background_color": "#111111",
