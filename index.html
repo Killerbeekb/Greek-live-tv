@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>OmeChat V2</title>
+<title>OmeChat Live</title>
 <link rel="manifest" href="manifest.json">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
@@ -30,12 +30,14 @@ button { border: none; border-radius: 20px; padding: 10px 16px; font-weight: bol
 .btn-report { background: #424242; color: #ffab40; font-size: 12px; padding: 6px 12px; }
 button:disabled { opacity: 0.5; }
 </style>
+<script src="https://gstatic.com"></script>
+<script src="https://gstatic.com"></script>
 </head>
 <body>
 
 <div class="header">
 <h1>OmeChat Live</h1>
-<span class="status" id="statusText">Έκδοση 2 - Έτοιμο</span>
+<span class="status" id="statusText">Έτοιμο</span>
 <button class="btn-report" onclick="doReport()">⚠️ Report</button>
 </div>
 
@@ -46,7 +48,7 @@ button:disabled { opacity: 0.5; }
 </div>
 <div class="video-box">
 <video id="localVideo" autoplay playsinline muted></video>
-<div class="label">Εσύ (You)</div>
+<div class="label" id="myLabel">Εσύ (You) 🎤</div>
 </div>
 <div class="chat-overlay" id="chatBox"></div>
 </div>
@@ -63,50 +65,6 @@ button:disabled { opacity: 0.5; }
 </div>
 
 <script>
-let localStream = null;
-const statusText = document.getElementById('statusText');
-const localVideo = document.getElementById('localVideo');
-
-async function doStart() {
-statusText.innerText = "Άνοιγμα κάμερας...";
-try {
-if (!localStream) {
-localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-localVideo.srcObject = localStream;
-}
-document.getElementById('stopBtn').disabled = false;
-statusText.innerText = "Αναζήτηση χρήστη...";
-if (window.connectFirebase) {
-window.connectFirebase(localStream);
-} else {
-statusText.innerText = "Κάμερα ΟΚ (Αναμονή Server)";
-}
-} catch (err) {
-statusText.innerText = "Σφάλμα: " + err.name;
-alert("Πρόβλημα κάμερας: " + err.name + " - " + err.message);
-}
-}
-
-function doStop() {
-if (window.disconnectFirebase) window.disconnectFirebase();
-statusText.innerText = "Σταμάτησε";
-document.getElementById('stopBtn').disabled = true;
-}
-
-function doSend() {
-if (window.sendFirebaseMsg) window.sendFirebaseMsg();
-}
-
-function doReport() {
-alert("Η αναφορά καταχωρήθηκε.");
-doStart();
-}
-</script>
-
-<script type="module">
-import { initializeApp } from "https://gstatic.com";
-import { getFirestore, collection, doc, setDoc, getDocs, addDoc, onSnapshot, deleteDoc, query, where, limit } from "https://gstatic.com";
-
 const firebaseConfig = {
 apiKey: "AIzaSyCC1PFUW9uLh-E1mc9Byk3GxlJqQYrbh_A",
 authDomain: "://firebaseapp.com",
@@ -116,25 +74,44 @@ messagingSenderId: "778988572064",
 appId: "1:778988572064:web:2fdf78082d7123eee0e8c5"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 const servers = { iceServers: Array.of({ urls: 'stun:://google.com' }) };
 
+let localStream = null;
 let pc = null;
 let currentRoomId = null;
 let unsubRoom = null;
 let unsubChat = null;
+
+const statusText = document.getElementById('statusText');
+const localVideo = document.getElementById('localVideo');
 const remoteVideo = document.getElementById('remoteVideo');
 const chatBox = document.getElementById('chatBox');
-const statusText = document.getElementById('statusText');
+const myLabel = document.getElementById('myLabel');
 const myId = Math.random().toString(36).substring(2, 9);
 
-window.connectFirebase = async function(stream) {
+async function doStart() {
 try {
-await window.disconnectFirebase();
+if (!localStream) {
+statusText.innerText = "Άδεια μικροφώνου...";
+const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+statusText.innerText = "Άδεια κάμερας...";
+const videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+
+localStream = new MediaStream();
+audioStream.getAudioTracks().forEach(t => localStream.addTrack(t));
+videoStream.getVideoTracks().forEach(t => localStream.addTrack(t));
+localVideo.srcObject = localStream;
+myLabel.innerText = "Εσύ (You) 🎤 OK";
+}
+await doCleanup();
+document.getElementById('stopBtn').disabled = false;
+statusText.innerText = "Αναζήτηση χρήστη...";
 chatBox.innerHTML = "";
+
 pc = new RTCPeerConnection(servers);
-stream.getTracks().forEach(track => pc.addTrack(track, stream));
+localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
 pc.ontrack = (event) => {
 const s = event.streams.at(0);
@@ -144,70 +121,64 @@ statusText.innerText = "Συνδέθηκες!";
 }
 };
 
-const roomsRef = collection(db, 'rooms');
-const q = query(roomsRef, where('status', '==', 'waiting'), limit(1));
-const snapshot = await getDocs(q);
+const snapshot = await db.collection('rooms').where('status', '==', 'waiting').limit(1).get();
 
 if (!snapshot.empty) {
 const roomDoc = snapshot.docs.at(0);
 currentRoomId = roomDoc.id;
-const roomRef = doc(db, 'rooms', currentRoomId);
-const callerCandidates = collection(roomRef, 'callerCandidates');
-const calleeCandidates = collection(roomRef, 'calleeCandidates');
+const roomRef = db.collection('rooms').doc(currentRoomId);
 
-pc.onicecandidate = e => e.candidate && addDoc(calleeCandidates, e.candidate.toJSON());
+pc.onicecandidate = e => { if (e.candidate) roomRef.collection('calleeCandidates').add(e.candidate.toJSON()); };
 
 const offer = roomDoc.data().offer;
 await pc.setRemoteDescription(new RTCSessionDescription(offer));
 const answer = await pc.createAnswer();
 await pc.setLocalDescription(answer);
 
-await setDoc(roomRef, { answer: { type: answer.type, sdp: answer.sdp }, status: 'connected' }, { merge: true });
+await roomRef.update({ answer: { type: answer.type, sdp: answer.sdp }, status: 'connected' });
 
-onSnapshot(callerCandidates, snap => {
+roomRef.collection('callerCandidates').onSnapshot(snap => {
 snap.docChanges().forEach(change => {
 if (change.type === 'added') pc.addIceCandidate(new RTCIceCandidate(change.doc.data()));
 });
 });
-unsubRoom = onSnapshot(roomRef, snap => { if (!snap.exists()) window.connectFirebase(stream); });
+unsubRoom = roomRef.onSnapshot(snap => { if (!snap.exists) doStart(); });
 listenChat(roomRef);
 } else {
-const roomRef = doc(collection(db, 'rooms'));
+const roomRef = db.collection('rooms').doc();
 currentRoomId = roomRef.id;
-const callerCandidates = collection(roomRef, 'callerCandidates');
-const calleeCandidates = collection(roomRef, 'calleeCandidates');
 
-pc.onicecandidate = e => e.candidate && addDoc(callerCandidates, e.candidate.toJSON());
+pc.onicecandidate = e => { if (e.candidate) roomRef.collection('callerCandidates').add(e.candidate.toJSON()); };
 
 const offer = await pc.createOffer();
 await pc.setLocalDescription(offer);
 
-await setDoc(roomRef, { offer: { type: offer.type, sdp: offer.sdp }, status: 'waiting' });
+await roomRef.set({ offer: { type: offer.type, sdp: offer.sdp }, status: 'waiting' });
 
-unsubRoom = onSnapshot(roomRef, async snap => {
+unsubRoom = roomRef.onSnapshot(async snap => {
 const data = snap.data();
-if (!data) { window.connectFirebase(stream); return; }
+if (!data) { doStart(); return; }
 if (!pc.currentRemoteDescription && data.answer) {
 await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
 statusText.innerText = "Συνδέθηκες!";
 }
 });
 
-onSnapshot(calleeCandidates, snap => {
+roomRef.collection('calleeCandidates').onSnapshot(snap => {
 snap.docChanges().forEach(change => {
 if (change.type === 'added') pc.addIceCandidate(new RTCIceCandidate(change.doc.data()));
 });
 });
 listenChat(roomRef);
 }
-} catch (e) {
-statusText.innerText = "Firebase Err: " + e.message;
+} catch (err) {
+statusText.innerText = "Σφάλμα: " + err.message;
+alert("Πρόβλημα: " + err.message);
 }
-};
+}
 
 function listenChat(roomRef) {
-const msgsRef = collection(roomRef, 'messages');
-unsubChat = onSnapshot(msgsRef, snap => {
+unsubChat = roomRef.collection('messages').orderBy('time').onSnapshot(snap => {
 snap.docChanges().forEach(change => {
 if (change.type === 'added') {
 const d = change.doc.data();
@@ -221,24 +192,35 @@ chatBox.scrollTop = chatBox.scrollHeight;
 });
 }
 
-window.sendFirebaseMsg = async function() {
+async function doSend() {
 const input = document.getElementById('msgInput');
 const text = input.value.trim();
 if (!text || !currentRoomId) return;
 input.value = '';
-await addDoc(collection(db, 'rooms', currentRoomId, 'messages'), { text, sender: myId, time: Date.now() });
-};
+await db.collection('rooms').doc(currentRoomId).collection('messages').add({ text: text, sender: myId, time: Date.now() });
+}
 
-window.disconnectFirebase = async function() {
+async function doCleanup() {
 if (unsubRoom) { unsubRoom(); unsubRoom = null; }
 if (unsubChat) { unsubChat(); unsubChat = null; }
 if (pc) { pc.close(); pc = null; }
 remoteVideo.srcObject = null;
 if (currentRoomId) {
-try { await deleteDoc(doc(db, 'rooms', currentRoomId)); } catch(e) {}
+try { await db.collection('rooms').doc(currentRoomId).delete(); } catch(e) {}
 currentRoomId = null;
 }
-};
+}
+
+async function doStop() {
+await doCleanup();
+statusText.innerText = "Σταμάτησε";
+document.getElementById('stopBtn').disabled = true;
+}
+
+function doReport() {
+alert("Η αναφορά καταχωρήθηκε.");
+doStart();
+}
 </script>
 </body>
 </html>
