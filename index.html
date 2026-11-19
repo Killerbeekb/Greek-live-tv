@@ -1,234 +1,244 @@
 <!DOCTYPE html>
 <html lang="el">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>OmeChat Live</title>
-  <link rel="manifest" href="manifest.json">
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-    body { background: #111; color: #fff; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
-    .header { background: #1e1e1e; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
-    .header h1 { font-size: 18px; color: #00e676; }
-    .status { font-size: 13px; color: #ffab40; font-weight: bold; }
-    .videos { flex: 1; display: flex; flex-direction: column; position: relative; background: #000; }
-    .video-box { flex: 1; position: relative; width: 100%; height: 50%; border-bottom: 1px solid #222; overflow: hidden; }
-    video { width: 100%; height: 100%; object-fit: cover; }
-    #localVideo { transform: scaleX(-1); }
-    .label { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 12px; font-size: 12px; }
-    .chat-overlay { position: absolute; bottom: 75px; left: 10px; right: 10px; max-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
-    .msg { background: rgba(0,0,0,0.65); padding: 5px 10px; border-radius: 10px; font-size: 13px; width: fit-content; max-width: 85%; }
-    .msg.me { background: rgba(0, 230, 118, 0.25); align-self: flex-end; }
-    .controls { background: #1e1e1e; padding: 10px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #333; }
-    .chat-input-row { display: flex; gap: 8px; }
-    input { flex: 1; background: #2c2c2c; border: none; color: #fff; padding: 10px 14px; border-radius: 20px; outline: none; font-size: 14px; }
-    button { border: none; border-radius: 20px; padding: 10px 16px; font-weight: bold; font-size: 14px; cursor: pointer; }
-    .btn-send { background: #2979ff; color: #fff; }
-    .action-row { display: flex; gap: 8px; justify-content: space-between; }
-    .btn-next { flex: 2; background: #00e676; color: #000; font-size: 16px; }
-    .btn-stop { flex: 1; background: #ff1744; color: #fff; }
-    .btn-report { background: #424242; color: #ffab40; font-size: 12px; padding: 6px 12px; }
-    button:disabled { opacity: 0.5; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>OmeChat V2</title>
+<link rel="manifest" href="manifest.json">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+body { background: #111; color: #fff; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+.header { background: #1e1e1e; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+.header h1 { font-size: 18px; color: #00e676; }
+.status { font-size: 13px; color: #00e676; font-weight: bold; }
+.videos { flex: 1; display: flex; flex-direction: column; position: relative; background: #000; }
+.video-box { flex: 1; position: relative; width: 100%; height: 50%; border-bottom: 1px solid #222; overflow: hidden; }
+video { width: 100%; height: 100%; object-fit: cover; }
+#localVideo { transform: scaleX(-1); }
+.label { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 12px; font-size: 12px; }
+.chat-overlay { position: absolute; bottom: 75px; left: 10px; right: 10px; max-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
+.msg { background: rgba(0,0,0,0.65); padding: 5px 10px; border-radius: 10px; font-size: 13px; width: fit-content; max-width: 85%; }
+.msg.me { background: rgba(0, 230, 118, 0.25); align-self: flex-end; }
+.controls { background: #1e1e1e; padding: 10px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #333; }
+.chat-input-row { display: flex; gap: 8px; }
+input { flex: 1; background: #2c2c2c; border: none; color: #fff; padding: 10px 14px; border-radius: 20px; outline: none; font-size: 14px; }
+button { border: none; border-radius: 20px; padding: 10px 16px; font-weight: bold; font-size: 14px; cursor: pointer; }
+.btn-send { background: #2979ff; color: #fff; }
+.action-row { display: flex; gap: 8px; justify-content: space-between; }
+.btn-next { flex: 2; background: #00e676; color: #000; font-size: 16px; }
+.btn-stop { flex: 1; background: #ff1744; color: #fff; }
+.btn-report { background: #424242; color: #ffab40; font-size: 12px; padding: 6px 12px; }
+button:disabled { opacity: 0.5; }
+</style>
 </head>
 <body>
 
-  <div class="header">
-    <h1>OmeChat Live</h1>
-    <span class="status" id="statusText">Έτοιμο</span>
-    <button class="btn-report" id="reportBtn">⚠️ Report</button>
-  </div>
+<div class="header">
+<h1>OmeChat Live</h1>
+<span class="status" id="statusText">Έκδοση 2 - Έτοιμο</span>
+<button class="btn-report" onclick="doReport()">⚠️ Report</button>
+</div>
 
-  <div class="videos">
-    <div class="video-box">
-      <video id="remoteVideo" autoplay playsinline></video>
-      <div class="label">Ξένος (Stranger)</div>
-    </div>
-    <div class="video-box">
-      <video id="localVideo" autoplay playsinline muted></video>
-      <div class="label">Εσύ (You)</div>
-    </div>
-    <div class="chat-overlay" id="chatBox"></div>
-  </div>
+<div class="videos">
+<div class="video-box">
+<video id="remoteVideo" autoplay playsinline></video>
+<div class="label">Ξένος (Stranger)</div>
+</div>
+<div class="video-box">
+<video id="localVideo" autoplay playsinline muted></video>
+<div class="label">Εσύ (You)</div>
+</div>
+<div class="chat-overlay" id="chatBox"></div>
+</div>
 
-  <div class="controls">
-    <div class="chat-input-row">
-      <input type="text" id="msgInput" placeholder="Γράψε ένα μήνυμα...">
-      <button class="btn-send" id="sendBtn">Αποστολή</button>
-    </div>
-    <div class="action-row">
-      <button class="btn-next" id="nextBtn">▶ Start / Next</button>
-      <button class="btn-stop" id="stopBtn" disabled>⏹ Stop</button>
-    </div>
-  </div>
+<div class="controls">
+<div class="chat-input-row">
+<input type="text" id="msgInput" placeholder="Γράψε ένα μήνυμα...">
+<button class="btn-send" onclick="doSend()">Αποστολή</button>
+</div>
+<div class="action-row">
+<button class="btn-next" id="nextBtn" onclick="doStart()">▶ Start / Next</button>
+<button class="btn-stop" id="stopBtn" onclick="doStop()" disabled>⏹ Stop</button>
+</div>
+</div>
 
-  <script type="module">
-    import { initializeApp } from "https://gstatic.com";
-    import { getFirestore, collection, doc, setDoc, getDocs, addDoc, onSnapshot, deleteDoc, query, where, limit } from "https://gstatic.com";
+<script>
+let localStream = null;
+const statusText = document.getElementById('statusText');
+const localVideo = document.getElementById('localVideo');
 
-    const statusText = document.getElementById('statusText');
-    const localVideo = document.getElementById('localVideo');
-    const remoteVideo = document.getElementById('remoteVideo');
-    const chatBox = document.getElementById('chatBox');
+async function doStart() {
+statusText.innerText = "Άνοιγμα κάμερας...";
+try {
+if (!localStream) {
+localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+localVideo.srcObject = localStream;
+}
+document.getElementById('stopBtn').disabled = false;
+statusText.innerText = "Αναζήτηση χρήστη...";
+if (window.connectFirebase) {
+window.connectFirebase(localStream);
+} else {
+statusText.innerText = "Κάμερα ΟΚ (Αναμονή Server)";
+}
+} catch (err) {
+statusText.innerText = "Σφάλμα: " + err.name;
+alert("Πρόβλημα κάμερας: " + err.name + " - " + err.message);
+}
+}
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCC1PFUW9uLh-E1mc9Byk3GxlJqQYrbh_A",
-      authDomain: "://firebaseapp.com",
-      projectId: "greektv-4402e",
-      storageBucket: "greektv-4402e.firebasestorage.app",
-      messagingSenderId: "778988572064",
-      appId: "1:778988572064:web:2fdf78082d7123eee0e8c5"
-    };
+function doStop() {
+if (window.disconnectFirebase) window.disconnectFirebase();
+statusText.innerText = "Σταμάτησε";
+document.getElementById('stopBtn').disabled = true;
+}
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const servers = { iceServers: Array.of({ urls: 'stun:://google.com' }) };
+function doSend() {
+if (window.sendFirebaseMsg) window.sendFirebaseMsg();
+}
 
-    let pc = null;
-    let localStream = null;
-    let currentRoomId = null;
-    let unsubRoom = null;
-    let unsubChat = null;
+function doReport() {
+alert("Η αναφορά καταχωρήθηκε.");
+doStart();
+}
+</script>
 
-    async function initCamera() {
-      if (!localStream) {
-        statusText.innerText = "Άνοιγμα κάμερας...";
-        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        localVideo.srcObject = localStream;
-      }
-    }
+<script type="module">
+import { initializeApp } from "https://gstatic.com";
+import { getFirestore, collection, doc, setDoc, getDocs, addDoc, onSnapshot, deleteDoc, query, where, limit } from "https://gstatic.com";
 
-    async function findNext() {
-      try {
-        await initCamera();
-        await cleanupRoom();
-        document.getElementById('stopBtn').disabled = false;
-        statusText.innerText = "Αναζήτηση χρήστη...";
-        chatBox.innerHTML = "";
+const firebaseConfig = {
+apiKey: "AIzaSyCC1PFUW9uLh-E1mc9Byk3GxlJqQYrbh_A",
+authDomain: "://firebaseapp.com",
+projectId: "greektv-4402e",
+storageBucket: "greektv-4402e.firebasestorage.app",
+messagingSenderId: "778988572064",
+appId: "1:778988572064:web:2fdf78082d7123eee0e8c5"
+};
 
-        pc = new RTCPeerConnection(servers);
-        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const servers = { iceServers: Array.of({ urls: 'stun:://google.com' }) };
 
-        pc.ontrack = (event) => {
-          const s = event.streams.at(0);
-          if (s) {
-            remoteVideo.srcObject = s;
-            statusText.innerText = "Συνδέθηκες!";
-          }
-        };
+let pc = null;
+let currentRoomId = null;
+let unsubRoom = null;
+let unsubChat = null;
+const remoteVideo = document.getElementById('remoteVideo');
+const chatBox = document.getElementById('chatBox');
+const statusText = document.getElementById('statusText');
+const myId = Math.random().toString(36).substring(2, 9);
 
-        const roomsRef = collection(db, 'rooms');
-        const q = query(roomsRef, where('status', '==', 'waiting'), limit(1));
-        const snapshot = await getDocs(q);
+window.connectFirebase = async function(stream) {
+try {
+await window.disconnectFirebase();
+chatBox.innerHTML = "";
+pc = new RTCPeerConnection(servers);
+stream.getTracks().forEach(track => pc.addTrack(track, stream));
 
-        if (!snapshot.empty) {
-          const roomDoc = snapshot.docs.at(0);
-          currentRoomId = roomDoc.id;
-          const roomRef = doc(db, 'rooms', currentRoomId);
-          const callerCandidates = collection(roomRef, 'callerCandidates');
-          const calleeCandidates = collection(roomRef, 'calleeCandidates');
+pc.ontrack = (event) => {
+const s = event.streams.at(0);
+if (s) {
+remoteVideo.srcObject = s;
+statusText.innerText = "Συνδέθηκες!";
+}
+};
 
-          pc.onicecandidate = e => e.candidate && addDoc(calleeCandidates, e.candidate.toJSON());
+const roomsRef = collection(db, 'rooms');
+const q = query(roomsRef, where('status', '==', 'waiting'), limit(1));
+const snapshot = await getDocs(q);
 
-          const offer = roomDoc.data().offer;
-          await pc.setRemoteDescription(new RTCSessionDescription(offer));
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
+if (!snapshot.empty) {
+const roomDoc = snapshot.docs.at(0);
+currentRoomId = roomDoc.id;
+const roomRef = doc(db, 'rooms', currentRoomId);
+const callerCandidates = collection(roomRef, 'callerCandidates');
+const calleeCandidates = collection(roomRef, 'calleeCandidates');
 
-          await setDoc(roomRef, { answer: { type: answer.type, sdp: answer.sdp }, status: 'connected' }, { merge: true });
+pc.onicecandidate = e => e.candidate && addDoc(calleeCandidates, e.candidate.toJSON());
 
-          onSnapshot(callerCandidates, snap => {
-            snap.docChanges().forEach(change => {
-              if (change.type === 'added') pc.addIceCandidate(new RTCIceCandidate(change.doc.data()));
-            });
-          });
-          listenRoomAndChat(roomRef);
-        } else {
-          const roomRef = doc(collection(db, 'rooms'));
-          currentRoomId = roomRef.id;
-          const callerCandidates = collection(roomRef, 'callerCandidates');
-          const calleeCandidates = collection(roomRef, 'calleeCandidates');
+const offer = roomDoc.data().offer;
+await pc.setRemoteDescription(new RTCSessionDescription(offer));
+const answer = await pc.createAnswer();
+await pc.setLocalDescription(answer);
 
-          pc.onicecandidate = e => e.candidate && addDoc(callerCandidates, e.candidate.toJSON());
+await setDoc(roomRef, { answer: { type: answer.type, sdp: answer.sdp }, status: 'connected' }, { merge: true });
 
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
+onSnapshot(callerCandidates, snap => {
+snap.docChanges().forEach(change => {
+if (change.type === 'added') pc.addIceCandidate(new RTCIceCandidate(change.doc.data()));
+});
+});
+unsubRoom = onSnapshot(roomRef, snap => { if (!snap.exists()) window.connectFirebase(stream); });
+listenChat(roomRef);
+} else {
+const roomRef = doc(collection(db, 'rooms'));
+currentRoomId = roomRef.id;
+const callerCandidates = collection(roomRef, 'callerCandidates');
+const calleeCandidates = collection(roomRef, 'calleeCandidates');
 
-          await setDoc(roomRef, { offer: { type: offer.type, sdp: offer.sdp }, status: 'waiting' });
+pc.onicecandidate = e => e.candidate && addDoc(callerCandidates, e.candidate.toJSON());
 
-          unsubRoom = onSnapshot(roomRef, async snap => {
-            const data = snap.data();
-            if (!data) { findNext(); return; }
-            if (!pc.currentRemoteDescription && data.answer) {
-              await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-              statusText.innerText = "Συνδέθηκες!";
-            }
-          });
+const offer = await pc.createOffer();
+await pc.setLocalDescription(offer);
 
-          onSnapshot(calleeCandidates, snap => {
-            snap.docChanges().forEach(change => {
-              if (change.type === 'added') pc.addIceCandidate(new RTCIceCandidate(change.doc.data()));
-            });
-          });
-          listenChat(roomRef);
-        }
-      } catch (err) {
-        statusText.innerText = "Σφάλμα: " + err.message;
-        alert("Πρόβλημα: " + err.message);
-      }
-    }
+await setDoc(roomRef, { offer: { type: offer.type, sdp: offer.sdp }, status: 'waiting' });
 
-    function listenRoomAndChat(roomRef) {
-      unsubRoom = onSnapshot(roomRef, snap => {
-        if (!snap.exists()) findNext();
-      });
-      listenChat(roomRef);
-    }
+unsubRoom = onSnapshot(roomRef, async snap => {
+const data = snap.data();
+if (!data) { window.connectFirebase(stream); return; }
+if (!pc.currentRemoteDescription && data.answer) {
+await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+statusText.innerText = "Συνδέθηκες!";
+}
+});
 
-    function listenChat(roomRef) {
-      const msgsRef = collection(roomRef, 'messages');
-      unsubChat = onSnapshot(msgsRef, snap => {
-        snap.docChanges().forEach(change => {
-          if (change.type === 'added') {
-            const d = change.doc.data();
-            const div = document.createElement('div');
-            div.className = 'msg' + (d.sender === myId ? ' me' : '');
-            div.innerText = d.text;
-            chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight;
-          }
-        });
-      });
-    }
+onSnapshot(calleeCandidates, snap => {
+snap.docChanges().forEach(change => {
+if (change.type === 'added') pc.addIceCandidate(new RTCIceCandidate(change.doc.data()));
+});
+});
+listenChat(roomRef);
+}
+} catch (e) {
+statusText.innerText = "Firebase Err: " + e.message;
+}
+};
 
-    const myId = Math.random().toString(36).substring(2, 9);
+function listenChat(roomRef) {
+const msgsRef = collection(roomRef, 'messages');
+unsubChat = onSnapshot(msgsRef, snap => {
+snap.docChanges().forEach(change => {
+if (change.type === 'added') {
+const d = change.doc.data();
+const div = document.createElement('div');
+div.className = 'msg' + (d.sender === myId ? ' me' : '');
+div.innerText = d.text;
+chatBox.appendChild(div);
+chatBox.scrollTop = chatBox.scrollHeight;
+}
+});
+});
+}
 
-    async function sendMessage() {
-      const input = document.getElementById('msgInput');
-      const text = input.value.trim();
-      if (!text || !currentRoomId) return;
-      input.value = '';
-      await addDoc(collection(db, 'rooms', currentRoomId, 'messages'), { text, sender: myId, time: Date.now() });
-    }
+window.sendFirebaseMsg = async function() {
+const input = document.getElementById('msgInput');
+const text = input.value.trim();
+if (!text || !currentRoomId) return;
+input.value = '';
+await addDoc(collection(db, 'rooms', currentRoomId, 'messages'), { text, sender: myId, time: Date.now() });
+};
 
-    async function cleanupRoom() {
-      if (unsubRoom) { unsubRoom(); unsubRoom = null; }
-      if (unsubChat) { unsubChat(); unsubChat = null; }
-      if (pc) { pc.close(); pc = null; }
-      remoteVideo.srcObject = null;
-      if (currentRoomId) {
-        try { await deleteDoc(doc(db, 'rooms', currentRoomId)); } catch(e) {}
-        currentRoomId = null;
-      }
-    }
-
-    async function stopChat() {
-      await cleanupRoom();
-      statusText.innerText = "Σταμάτησε";
-      document.getElementById('stopBtn').disabled = true;
-    }
-
-    document.getElementById('nextBtn').addEventListener('click', findNext);
-    document.getElementById('stopBtn').addEventListener('click', stopChat);
-    document.getElementById('sendBtn').addEventListener('click', sendMessage);
-    document.getElementById('reportBtn').addEventListener('click', () => {
+window.disconnectFirebase = async function() {
+if (unsubRoom) { unsubRoom(); unsubRoom = null; }
+if (unsubChat) { unsubChat(); unsubChat = null; }
+if (pc) { pc.close(); pc = null; }
+remoteVideo.srcObject = null;
+if (currentRoomId) {
+try { await deleteDoc(doc(db, 'rooms', currentRoomId)); } catch(e) {}
+currentRoomId = null;
+}
+};
+</script>
+</body>
+</html>
