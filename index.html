@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>OmeChat Live - Random Video Chat</title>
+  <title>OmeChat Live</title>
   <link rel="manifest" href="manifest.json">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
     body { background: #111; color: #fff; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
     .header { background: #1e1e1e; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
     .header h1 { font-size: 18px; color: #00e676; }
-    .status { font-size: 13px; color: #aaa; }
+    .status { font-size: 13px; color: #ffab40; font-weight: bold; }
     .videos { flex: 1; display: flex; flex-direction: column; position: relative; background: #000; }
     .video-box { flex: 1; position: relative; width: 100%; height: 50%; border-bottom: 1px solid #222; overflow: hidden; }
     video { width: 100%; height: 100%; object-fit: cover; }
@@ -22,21 +22,21 @@
     .controls { background: #1e1e1e; padding: 10px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #333; }
     .chat-input-row { display: flex; gap: 8px; }
     input { flex: 1; background: #2c2c2c; border: none; color: #fff; padding: 10px 14px; border-radius: 20px; outline: none; font-size: 14px; }
-    button { border: none; border-radius: 20px; padding: 10px 16px; font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.2s; }
+    button { border: none; border-radius: 20px; padding: 10px 16px; font-weight: bold; font-size: 14px; cursor: pointer; }
     .btn-send { background: #2979ff; color: #fff; }
     .action-row { display: flex; gap: 8px; justify-content: space-between; }
     .btn-next { flex: 2; background: #00e676; color: #000; font-size: 16px; }
     .btn-stop { flex: 1; background: #ff1744; color: #fff; }
     .btn-report { background: #424242; color: #ffab40; font-size: 12px; padding: 6px 12px; }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button:disabled { opacity: 0.5; }
   </style>
 </head>
 <body>
 
   <div class="header">
     <h1>OmeChat Live</h1>
-    <span class="status" id="statusText">Πάτα Start για σύνδεση</span>
-    <button class="btn-report" onclick="reportUser()">⚠️ Report</button>
+    <span class="status" id="statusText">Έτοιμο</span>
+    <button class="btn-report" id="reportBtn">⚠️ Report</button>
   </div>
 
   <div class="videos">
@@ -53,18 +53,23 @@
 
   <div class="controls">
     <div class="chat-input-row">
-      <input type="text" id="msgInput" placeholder="Γράψε ένα μήνυμα..." onkeypress="if(event.key==='Enter') sendMessage()">
-      <button class="btn-send" onclick="sendMessage()">Αποστολή</button>
+      <input type="text" id="msgInput" placeholder="Γράψε ένα μήνυμα...">
+      <button class="btn-send" id="sendBtn">Αποστολή</button>
     </div>
     <div class="action-row">
-      <button class="btn-next" id="nextBtn" onclick="findNext()">▶ Start / Next</button>
-      <button class="btn-stop" id="stopBtn" onclick="stopChat()" disabled>⏹ Stop</button>
+      <button class="btn-next" id="nextBtn">▶ Start / Next</button>
+      <button class="btn-stop" id="stopBtn" disabled>⏹ Stop</button>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://gstatic.com";
     import { getFirestore, collection, doc, setDoc, getDocs, addDoc, onSnapshot, deleteDoc, query, where, limit } from "https://gstatic.com";
+
+    const statusText = document.getElementById('statusText');
+    const localVideo = document.getElementById('localVideo');
+    const remoteVideo = document.getElementById('remoteVideo');
+    const chatBox = document.getElementById('chatBox');
 
     const firebaseConfig = {
       apiKey: "AIzaSyCC1PFUW9uLh-E1mc9Byk3GxlJqQYrbh_A",
@@ -77,34 +82,23 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const servers = { iceServers: Array.of({ urls: 'stun:://google.com' }) };
 
-    const servers = { iceServers: [{ urls: ['stun:://google.com', 'stun:://google.com'] }] };
     let pc = null;
     let localStream = null;
     let currentRoomId = null;
     let unsubRoom = null;
     let unsubChat = null;
 
-    const localVideo = document.getElementById('localVideo');
-    const remoteVideo = document.getElementById('remoteVideo');
-    const statusText = document.getElementById('statusText');
-    const chatBox = document.getElementById('chatBox');
-
     async function initCamera() {
       if (!localStream) {
-        try {
-          statusText.innerText = "Άνοιγμα κάμερας...";
-          localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
-          localVideo.srcObject = localStream;
-        } catch (e) {
-          statusText.innerText = "Σφάλμα κάμερας!";
-          alert("Δώσε άδεια στην κάμερα και το μικρόφωνο από τις ρυθμίσεις του browser: " + e.message);
-          throw e;
-        }
+        statusText.innerText = "Άνοιγμα κάμερας...";
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        localVideo.srcObject = localStream;
       }
     }
 
-    window.findNext = async function() {
+    async function findNext() {
       try {
         await initCamera();
         await cleanupRoom();
@@ -116,9 +110,9 @@
         localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
         pc.ontrack = (event) => {
-          const [firstStream] = event.streams;
-          if (firstStream) {
-            remoteVideo.srcObject = firstStream;
+          const s = event.streams.at(0);
+          if (s) {
+            remoteVideo.srcObject = s;
             statusText.innerText = "Συνδέθηκες!";
           }
         };
@@ -179,10 +173,10 @@
           listenChat(roomRef);
         }
       } catch (err) {
-        console.error(err);
         statusText.innerText = "Σφάλμα: " + err.message;
+        alert("Πρόβλημα: " + err.message);
       }
-    };
+    }
 
     function listenRoomAndChat(roomRef) {
       unsubRoom = onSnapshot(roomRef, snap => {
@@ -209,13 +203,13 @@
 
     const myId = Math.random().toString(36).substring(2, 9);
 
-    window.sendMessage = async function() {
+    async function sendMessage() {
       const input = document.getElementById('msgInput');
       const text = input.value.trim();
       if (!text || !currentRoomId) return;
       input.value = '';
       await addDoc(collection(db, 'rooms', currentRoomId, 'messages'), { text, sender: myId, time: Date.now() });
-    };
+    }
 
     async function cleanupRoom() {
       if (unsubRoom) { unsubRoom(); unsubRoom = null; }
@@ -224,3 +218,17 @@
       remoteVideo.srcObject = null;
       if (currentRoomId) {
         try { await deleteDoc(doc(db, 'rooms', currentRoomId)); } catch(e) {}
+        currentRoomId = null;
+      }
+    }
+
+    async function stopChat() {
+      await cleanupRoom();
+      statusText.innerText = "Σταμάτησε";
+      document.getElementById('stopBtn').disabled = true;
+    }
+
+    document.getElementById('nextBtn').addEventListener('click', findNext);
+    document.getElementById('stopBtn').addEventListener('click', stopChat);
+    document.getElementById('sendBtn').addEventListener('click', sendMessage);
+    document.getElementById('reportBtn').addEventListener('click', () => {
