@@ -1,0 +1,15 @@
+{
+  "name": "OmeChat Live",
+  "short_name": "OmeChat",
+  "start_url": "/Greek-live-tv/",
+  "display": "standalone",
+  "background_color": "#111111",
+  "theme_color": "#00e676",
+  "icons": [
+    {
+      "src": "https://flaticon.com",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
